@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Passport;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redis;
 
 class PassportController extends Controller
 {
@@ -60,7 +61,19 @@ class PassportController extends Controller
 
 
     public function getPassports() {
-        return Passport::all();
+
+        $redis    = Redis::connection();
+        // $redis->del('passports');
+        // return Passport::all();
+        if( $redis->exists("passports") ) {
+            $response = $redis->get('passports');
+            $response = json_decode($response);
+        }else {
+            $redis->set('passports', json_encode(Passport::all()));
+            $response = $redis->get('passports');
+            $response = json_decode($response);
+        }
+        return $response;
     }
 
 }
